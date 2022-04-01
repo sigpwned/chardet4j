@@ -140,4 +140,35 @@ public final class Chardet {
         new SequenceInputStream(new ByteArrayInputStream(buf, offset, buflen - offset), input),
         charset);
   }
+
+  /**
+   * Returns a character-decoded String version of the given bytes. The declared encoding is treated
+   * as a hint. Any leading BOMs are discarded. If no character set can be detected, then the given
+   * default is used.
+   */
+  public static String decode(byte[] data, String declaredEncoding, Charset defaultCharset) {
+    return decode(data, data.length, declaredEncoding, defaultCharset);
+  }
+
+  /**
+   * Returns a character-decoded String version of the given bytes. The declared encoding is treated
+   * as a hint. Any leading BOMs are discarded. If no character set can be detected, then the given
+   * default is used.
+   */
+  public static String decode(byte[] data, int datalen, String declaredEncoding,
+      Charset defaultCharset) {
+    // We work directly with the byte array here as opposed to wrapping in an InputStream to avoid
+    // extra copies. Performance matters.
+    Charset charset = detectCharset(data, datalen, declaredEncoding).orElse(defaultCharset);
+
+    int offset;
+    Optional<ByteOrderMark> maybeBom = ByteOrderMark.detect(data, datalen);
+    if (maybeBom.isPresent()) {
+      offset = maybeBom.map(bom -> bom.getBytes().length).get();
+    } else {
+      offset = 0;
+    }
+
+    return new String(data, offset, datalen - offset, charset);
+  }
 }

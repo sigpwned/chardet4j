@@ -121,7 +121,7 @@ public class ChardetTest {
    * We should ignore the BOM
    */
   @Test
-  public void decodeTest() throws IOException {
+  public void decodeStreamTest() throws IOException {
     ByteArrayOutputStream buf = new ByteArrayOutputStream();
     buf.write(ByteOrderMark.UTF_8.getBytes());
     buf.write("Hello, world!".getBytes(StandardCharsets.UTF_8));
@@ -131,6 +131,20 @@ public class ChardetTest {
         StandardCharsets.UTF_8)) {
       decoded = CharStreams.toString(r);
     }
+
+    assertThat(decoded, is("Hello, world!"));
+  }
+
+  /**
+   * We should ignore the BOM
+   */
+  @Test
+  public void decodeArrayTest() throws IOException {
+    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    buf.write(ByteOrderMark.UTF_8.getBytes());
+    buf.write("Hello, world!".getBytes(StandardCharsets.UTF_8));
+
+    String decoded = Chardet.decode(buf.toByteArray(), "utf-8", StandardCharsets.UTF_8);
 
     assertThat(decoded, is("Hello, world!"));
   }
