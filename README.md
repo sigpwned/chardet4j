@@ -1,4 +1,4 @@
-CHARDET4J
+CHARDET4J [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.sigpwned/chardet4j/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.sigpwned/chardet4j)
 
 The state of the art character set detection library for Java is
 [icu4j](https://github.com/unicode-org/icu). However, the icu4j JAR
