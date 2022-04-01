@@ -124,6 +124,8 @@ public final class Chardet {
     for (int nread = input.read(buf, buflen, buf.length - buflen); nread != -1; nread =
         input.read(buf, buflen, buf.length - buflen)) {
       buflen = buflen + nread;
+      if(buflen == buf.length)
+        break;
     }
 
     Charset charset = detectCharset(buf, buflen, declaredEncoding).orElse(defaultCharset);
