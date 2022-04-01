@@ -19,37 +19,41 @@
  */
 package com.sigpwned.chardet4j;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import java.nio.charset.Charset;
-import java.util.Optional;
-import com.sigpwned.chardet4j.com.ibm.icu.text.CharsetDetector;
-import com.sigpwned.chardet4j.com.ibm.icu.text.CharsetMatch;
+import java.nio.charset.StandardCharsets;
+import org.junit.Test;
 
-/**
- * Simple interface to charset detection.
- */
-public final class Chardet {
-  private Chardet() {}
+public class ChardetTest {
+  @Test
+  public void iso8859Test() {
+    Charset charset =
+        Chardet.detectCharset("Hello, world!".getBytes(StandardCharsets.ISO_8859_1)).get();
 
-  /**
-   * Detect the charset of the given byte data.
-   */
-  public static Optional<Charset> detectCharset(byte[] data) {
-    return detectCharset(data, null);
+    assertThat(charset, is(StandardCharsets.ISO_8859_1));
   }
 
-  /**
-   * Detect the charset of the given byte data with the given encoding as a hint.
-   */
-  public static Optional<Charset> detectCharset(byte[] data, String declaredEncoding) {
-    CharsetDetector chardet = new CharsetDetector();
+  @Test
+  public void utf8Test() {
+    Charset charset = Chardet.detectCharset("Hellö, world!".getBytes(StandardCharsets.UTF_8)).get();
 
-    chardet.setText(data);
+    assertThat(charset, is(StandardCharsets.UTF_8));
+  }
 
-    if (declaredEncoding != null)
-      chardet.setDeclaredEncoding(declaredEncoding);
+  @Test
+  public void utf16BeTest() {
+    Charset charset =
+        Chardet.detectCharset("Hellö, world!".getBytes(StandardCharsets.UTF_16BE)).get();
 
-    CharsetMatch match = chardet.detect();
+    assertThat(charset, is(StandardCharsets.UTF_16BE));
+  }
 
-    return Optional.ofNullable(match).map(m -> Charset.forName(m.getName()));
+  @Test
+  public void utf16LeTest() {
+    Charset charset =
+        Chardet.detectCharset("Hellö, world!".getBytes(StandardCharsets.UTF_16LE)).get();
+
+    assertThat(charset, is(StandardCharsets.UTF_16LE));
   }
 }
