@@ -29,6 +29,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import com.google.common.io.CharStreams;
+import com.google.common.io.Resources;
 
 public class ChardetTest {
   @Test
@@ -37,6 +38,14 @@ public class ChardetTest {
         Chardet.detectCharset("Hello, world!".getBytes(StandardCharsets.ISO_8859_1)).get();
 
     assertThat(charset, is(StandardCharsets.ISO_8859_1));
+  }
+
+  @Test
+  public void iso8859Utf8Test() {
+    Charset charset =
+        Chardet.detectCharset("Hello, world!".getBytes(StandardCharsets.UTF_8), "utf-8").get();
+
+    assertThat(charset, is(StandardCharsets.UTF_8));
   }
 
   @Test
@@ -147,5 +156,17 @@ public class ChardetTest {
     String decoded = Chardet.decode(buf.toByteArray(), "utf-8", StandardCharsets.UTF_8);
 
     assertThat(decoded, is("Hello, world!"));
+  }
+
+  /**
+   * We should ignore the BOM
+   */
+  @Test
+  public void longTest() throws IOException {
+    byte[] data = Resources.toByteArray(Resources.getResource("webpage.html"));
+
+    Charset charset = Chardet.detectCharset(data, "utf-8").get();
+
+    assertThat(charset, is(StandardCharsets.UTF_8));
   }
 }

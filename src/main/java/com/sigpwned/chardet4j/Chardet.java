@@ -19,6 +19,7 @@
  */
 package com.sigpwned.chardet4j;
 
+import static java.util.stream.Collectors.toList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +28,10 @@ import java.io.Reader;
 import java.io.SequenceInputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import com.sigpwned.chardet4j.com.ibm.icu.text.CharsetDetector;
 import com.sigpwned.chardet4j.com.ibm.icu.text.CharsetMatch;
@@ -44,6 +49,73 @@ public final class Chardet {
     return detectCharset(data, null);
   }
 
+  private static final int MIN_CONFIDENCE = 0;
+  private static final int MAX_CONFIDENCE = 100;
+  private static final int DECLARED_ENCODING_BUMP = 10;
+
+  /**
+   * We have to do this because the ICU detector ignores the declared encoding, but the CharsetMatch
+   * values are immutable and the constructor isn't visible.
+   */
+  private static class ChardetMatch implements Comparable<ChardetMatch> {
+    public static ChardetMatch of(String name, int confidence) {
+      return new ChardetMatch(name, confidence);
+    }
+
+    private final String name;
+    private final int confidence;
+
+    public ChardetMatch(String name, int confidence) {
+      if (name == null)
+        throw new NullPointerException();
+      if (confidence < MIN_CONFIDENCE || confidence > MAX_CONFIDENCE)
+        throw new IllegalArgumentException("confidence out of range " + confidence);
+      this.name = name;
+      this.confidence = confidence;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * @return the confidence
+     */
+    public int getConfidence() {
+      return confidence;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(confidence, name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj)
+        return true;
+      if (obj == null)
+        return false;
+      if (getClass() != obj.getClass())
+        return false;
+      ChardetMatch other = (ChardetMatch) obj;
+      return confidence == other.confidence && Objects.equals(name, other.name);
+    }
+
+    @Override
+    public String toString() {
+      return "PossibleMatch [name=" + name + ", confidence=" + confidence + "]";
+    }
+
+    @Override
+    public int compareTo(ChardetMatch o) {
+      return getConfidence() - o.getConfidence();
+    }
+  }
+
   /**
    * Detect the charset of the given byte data with the given encoding as a hint. Input includes the
    * entire array.
@@ -58,12 +130,16 @@ public final class Chardet {
 
     chardet.setText(data);
 
-    if (declaredEncoding != null)
-      chardet.setDeclaredEncoding(declaredEncoding);
+    List<ChardetMatch> matches = Arrays.stream(chardet.detectAll()).map(mi -> {
+      String name = mi.getName();
+      int confidence = name.equalsIgnoreCase(declaredEncoding)
+          ? Math.min(mi.getConfidence() + DECLARED_ENCODING_BUMP, MAX_CONFIDENCE)
+          : mi.getConfidence();
+      return ChardetMatch.of(name, confidence);
+    }).sorted(Comparator.reverseOrder()).collect(toList());
 
-    CharsetMatch match = chardet.detect();
-
-    return Optional.ofNullable(match).map(m -> Charset.forName(m.getName()));
+    return matches.isEmpty() ? Optional.empty()
+        : Optional.of(matches.get(0).getName()).map(Charset::forName);
   }
 
   /**
@@ -124,7 +200,7 @@ public final class Chardet {
     for (int nread = input.read(buf, buflen, buf.length - buflen); nread != -1; nread =
         input.read(buf, buflen, buf.length - buflen)) {
       buflen = buflen + nread;
-      if(buflen == buf.length)
+      if (buflen == buf.length)
         break;
     }
 
@@ -166,7 +242,7 @@ public final class Chardet {
     int offset;
     Optional<ByteOrderMark> maybeBom = ByteOrderMark.detect(data, datalen);
     if (maybeBom.isPresent()) {
-      offset = maybeBom.map(bom -> bom.getBytes().length).get();
+      offset = maybeBom.map(bom -> bom.getBytes().length).get().intValue();
     } else {
       offset = 0;
     }
