@@ -3,7 +3,7 @@
 
     <groupId>com.sigpwned</groupId>
     <artifactId>chardet4j</artifactId>
-    <version>70.1.5-SNAPSHOT</version>
+    <version>71.1.0</version>
     <name>chardet4j</name>
     <inceptionYear>2022</inceptionYear>
     <description>Simple, compact charset detection for Java 8+</description>
@@ -19,7 +19,7 @@
         <connection>scm:git:ssh://git@github.com/sigpwned/chardet4j.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/sigpwned/chardet4j.git</developerConnection>
         <url>https://github.com/sigpwned/chardet4j/tree/main</url>
-        <tag>v70.1.0</tag>
+        <tag>v71.1.0</tag>
     </scm>
 
     <licenses>
