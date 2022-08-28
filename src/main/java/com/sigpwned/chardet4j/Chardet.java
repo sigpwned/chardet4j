@@ -51,7 +51,9 @@ public final class Chardet {
 
   private static final int MIN_CONFIDENCE = 0;
   private static final int MAX_CONFIDENCE = 100;
-  private static final int DECLARED_ENCODING_BUMP = 10;
+
+  private static final int DECLARED_ENCODING_BUMP = Optional
+      .ofNullable(System.getProperty("chardet4j.detect.bump")).map(Integer::parseInt).orElse(10);
 
   /**
    * We have to do this because the ICU detector ignores the declared encoding, but the CharsetMatch
