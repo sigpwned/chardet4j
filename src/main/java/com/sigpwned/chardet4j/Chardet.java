@@ -175,10 +175,12 @@ public final class Chardet {
   }
 
   /**
-   * This is chosen based on a reading of the CharsetDetector source code, which sets buffer size at
-   * 8000. (Ample) extra space is left for BOMs.
+   * The default is chosen based on a reading of the CharsetDetector source code, which sets buffer
+   * size for byte frequency analysis at 8000. (Ample) extra space is left for BOMs.
    */
-  public static final int DECODE_DETECT_BUFSIZE = 8192;
+  public static final int DECODE_DETECT_BUFSIZE =
+      Optional.ofNullable(System.getProperty("chardet4j.detect.bufsize")).map(Integer::parseInt)
+          .orElse(8192);
 
   /**
    * Returns a character-decoded version of the given byte stream. Any leading BOMs are discarded.
