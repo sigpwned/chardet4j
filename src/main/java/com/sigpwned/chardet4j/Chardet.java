@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.SequenceInputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
@@ -188,7 +187,8 @@ public final class Chardet {
    * Returns a character-decoded version of the given byte stream. Any leading BOMs are discarded.
    * If no character set can be detected, then the given default is used.
    */
-  public static Reader decode(InputStream input, Charset defaultCharset) throws IOException {
+  public static InputStreamReader decode(InputStream input, Charset defaultCharset)
+      throws IOException {
     return decode(input, null, defaultCharset);
   }
 
@@ -197,8 +197,8 @@ public final class Chardet {
    * as a hint. Any leading BOMs are discarded. If no character set can be detected, then the given
    * default is used.
    */
-  public static Reader decode(InputStream input, String declaredEncoding, Charset defaultCharset)
-      throws IOException {
+  public static InputStreamReader decode(InputStream input, String declaredEncoding,
+      Charset defaultCharset) throws IOException {
     int buflen = 0;
     byte[] buf = new byte[DECODE_DETECT_BUFSIZE];
     for (int nread = input.read(buf, buflen, buf.length - buflen); nread != -1; nread =
