@@ -1,6 +1,6 @@
-CHARDET4J [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.sigpwned/chardet4j/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.sigpwned/chardet4j)
+# CHARDET4J [![tests](https://github.com/sigpwned/chardet4j/actions/workflows/tests.yml/badge.svg)](https://github.com/sigpwned/chardet4j/actions/workflows/tests.yml) ![Maven Central](https://img.shields.io/maven-central/v/com.sigpwned/chardet4j)
 
-# Introduction
+## Introduction
 
 The state-of-the-art character set detection library for Java is
 [icu4j](https://github.com/unicode-org/icu). However, the icu4j JAR
@@ -17,7 +17,7 @@ JARs. At the time of this writing, the chardet4j JAR comes in around
 This library also implements some other important components of
 character set detection and decoding, namely byte order mark handling.
 
-# Getting Started
+## Getting Started
 
 To decode an `InputStream` to a `Reader` by detecting its character set:
 
@@ -46,7 +46,7 @@ Users can simply detect a character set, too:
 
     Optional<Charset> maybeCharset=Chardet.detectCharset(bytes, declaredEncoding);
 
-# Licensing
+## Licensing
 
 The icu library is released under the ICU license. The chardet4j
 library is released under the Apache license.
