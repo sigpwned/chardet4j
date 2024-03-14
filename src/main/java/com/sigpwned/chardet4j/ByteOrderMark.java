@@ -58,7 +58,7 @@ public enum ByteOrderMark {
     for (ByteOrderMark value : values()) {
       byte[] bom = value.getBytes();
       int bomlength = value.getBytes().length;
-      if (bomlength <= data.length && Arrays.equals(data, 0, bomlength, bom, 0, bomlength)) {
+      if (bomlength <= data.length && equals(data, 0, bomlength, bom, 0, bomlength)) {
         return Optional.of(value);
       }
     }
@@ -69,11 +69,70 @@ public enum ByteOrderMark {
     for (ByteOrderMark value : values()) {
       byte[] bom = value.getBytes();
       int bomlen = value.getBytes().length;
-      if (bomlen <= datalen && Arrays.equals(data, 0, bomlen, bom, 0, bomlen)) {
+      if (bomlen <= datalen && equals(data, 0, bomlen, bom, 0, bomlen)) {
         return Optional.of(value);
       }
     }
     return Optional.empty();
+  }
+
+  /**
+   * Checks that {@code fromIndex} and {@code toIndex} are in the range and throws an exception if
+   * they aren't.
+   */
+  private static void rangeCheck(int arrayLength, int fromIndex, int toIndex) {
+    if (fromIndex > toIndex) {
+      throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+    }
+    if (fromIndex < 0) {
+      throw new ArrayIndexOutOfBoundsException(fromIndex);
+    }
+    if (toIndex > arrayLength) {
+      throw new ArrayIndexOutOfBoundsException(toIndex);
+    }
+  }
+
+  /**
+   * Returns true if the two specified arrays of bytes, over the specified ranges, are <i>equal</i>
+   * to one another.
+   *
+   * <p>
+   * Two arrays are considered equal if the number of elements covered by each range is the same,
+   * and all corresponding pairs of elements over the specified ranges in the two arrays are equal.
+   * In other words, two arrays are equal if they contain, over the specified ranges, the same
+   * elements in the same order.
+   *
+   * @param a the first array to be tested for equality
+   * @param aFromIndex the index (inclusive) of the first element in the first array to be tested
+   * @param aToIndex the index (exclusive) of the last element in the first array to be tested
+   * @param b the second array to be tested for equality
+   * @param bFromIndex the index (inclusive) of the first element in the second array to be tested
+   * @param bToIndex the index (exclusive) of the last element in the second array to be tested
+   * @return {@code true} if the two arrays, over the specified ranges, are equal
+   * @throws IllegalArgumentException if {@code aFromIndex > aToIndex} or if
+   *         {@code bFromIndex > bToIndex}
+   * @throws ArrayIndexOutOfBoundsException if {@code aFromIndex < 0 or aToIndex > a.length} or if
+   *         {@code bFromIndex < 0 or bToIndex > b.length}
+   * @throws NullPointerException if either array is {@code null}
+   */
+  private static boolean equals(byte[] a, int aFromIndex, int aToIndex, byte[] b, int bFromIndex,
+      int bToIndex) {
+    rangeCheck(a.length, aFromIndex, aToIndex);
+    rangeCheck(b.length, bFromIndex, bToIndex);
+
+    int aLength = aToIndex - aFromIndex;
+    int bLength = bToIndex - bFromIndex;
+    if (aLength != bLength)
+      return false;
+    int length = aLength;
+
+    for (int i = 0; i < length; i++) {
+      if (a[aFromIndex + i] != b[bFromIndex + i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private final byte[] bytes;
