@@ -3,7 +3,7 @@
 
     <groupId>com.sigpwned</groupId>
     <artifactId>chardet4j</artifactId>
-    <version>74.2.2-SNAPSHOT</version>
+    <version>75.1.0-SNAPSHOT</version>
     <name>chardet4j</name>
     <inceptionYear>2022</inceptionYear>
     <description>Simple, compact charset detection for Java 8+</description>
