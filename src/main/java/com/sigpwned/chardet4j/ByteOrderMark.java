@@ -112,9 +112,13 @@ public enum ByteOrderMark {
    * @param data the data to check
    * @return the BOM, if found, otherwise empty
    * 
+   * @throws NullPointerException if {@code data} is {@code null}
+   * 
    * @see #detect(byte[], int)
    */
   public static Optional<ByteOrderMark> detect(byte[] data) {
+    if(data == null)
+      throw new NullPointerException();
     return detect(data, data.length);
   }
 
@@ -124,6 +128,9 @@ public enum ByteOrderMark {
    * @param data the data to check
    * @param len the length of the data to check
    * @return the BOM, if found, otherwise empty
+   * 
+   * @throws NullPointerException if {@code data} is {@code null}
+   * @throws IllegalArgumentException if {@code len < 0}
    * 
    * @see #detect(byte[], int, int)
    */
@@ -277,7 +284,8 @@ public enum ByteOrderMark {
       try {
         c = Charset.forName(charsetName);
       } catch (IllegalCharsetNameException e) {
-        // If the charset name is illegal, then set the cached charset to null.
+        // Odd. None of these charset names should be invalid. Just treat it like it's not supported
+        // and set the cached charset to null.
         c = null;
       } catch (UnsupportedCharsetException e) {
         // If the charset is not supported, then set the cached charset to null.
