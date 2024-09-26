@@ -131,6 +131,7 @@ public enum ByteOrderMark {
    * 
    * @throws NullPointerException if {@code data} is {@code null}
    * @throws IllegalArgumentException if {@code len < 0}
+   * @throws ArrayIndexOutOfBoundsException if {@code len > data.length}
    * 
    * @see #detect(byte[], int, int)
    */

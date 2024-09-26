@@ -154,6 +154,7 @@ public final class Chardet {
    * 
    * @throws NullPointerException if data is null
    * @throws IllegalArgumentException if len < 0
+   * @throws ArrayIndexOutOfBoundsException if len > data.length
    * @throws UnsupportedOperationException If the charset can be detected, but is not supported.
    */
   public static Optional<Charset> detectCharset(byte[] data, int len, String declaredEncoding) {
@@ -301,6 +302,14 @@ public final class Chardet {
   /**
    * Returns a character-decoded version of the given byte stream. Any leading BOMs are discarded.
    * If no character set can be detected, then the given default is used.
+   * 
+   * @param input the input stream
+   * @param defaultCharset the default charset to use if no other can be detected
+   * 
+   * @throws NullPointerException if input is null
+   * @throws NullPointerException if defaultCharset is null
+   * @throws IOException if an I/O error occurs
+   * @throws UnsupportedCharsetException if the detected charset is not supported
    */
   public static DecodedInputStreamReader decode(InputStream input, Charset defaultCharset)
       throws IOException {
@@ -339,10 +348,8 @@ public final class Chardet {
         break;
     }
 
-    // TODO What exception should we throw here?
+    // Note that this cannot be null, since we check defaultCharset above.
     Charset charset = detectCharset(buf, buflen, declaredEncoding).orElse(defaultCharset);
-    if (charset == null)
-      throw new NullPointerException();
 
     int offset;
     Optional<ByteOrderMark> maybeBom = ByteOrderMark.detect(buf, buflen);
@@ -368,10 +375,13 @@ public final class Chardet {
    * @param defaultCharset the default charset to use if no other can be detected
    * @return the character-decoded string
    * 
+   * @throws NullPointerException if data is null
    * @throws UnsupportedCharsetException if the detected charset is not supported
+   * @throws UncheckedIOException if an I/O error occurs, which should not happen because all I/O
+   *         operations are performed in-memory
    */
   public static String decode(byte[] data, Charset defaultCharset) {
-    return decode(data, data.length, null, defaultCharset);
+    return decode(data, null, defaultCharset);
   }
 
   /**
@@ -385,9 +395,14 @@ public final class Chardet {
    * @param defaultCharset the default charset to use if no other can be detected
    * @return the character-decoded string
    * 
+   * @throws NullPointerException if data is null
    * @throws UnsupportedCharsetException if the detected charset is not supported
+   * @throws UncheckedIOException if an I/O error occurs, which should not happen because all I/O
+   *         operations are performed in-memory
    */
   public static String decode(byte[] data, String declaredEncoding, Charset defaultCharset) {
+    if (data == null)
+      throw new NullPointerException();
     return decode(data, data.length, declaredEncoding, defaultCharset);
   }
 
@@ -403,7 +418,12 @@ public final class Chardet {
    * @param defaultCharset the default charset to use if no other can be detected
    * @return the character-decoded string
    * 
+   * @throws NullPointerException if data is null
+   * @throws IllegalArgumentException if len < 0
+   * @throws ArrayIndexOutOfBoundsException if len > data.length
    * @throws UnsupportedCharsetException if the detected charset is detected, but not supported
+   * @throws UncheckedIOException if an I/O error occurs, which should not happen because all I/O
+   *         operations are performed in-memory
    */
   public static String decode(byte[] data, int len, String declaredEncoding,
       Charset defaultCharset) {
