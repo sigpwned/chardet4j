@@ -19,10 +19,16 @@
  */
 package com.sigpwned.chardet4j;
 
+import static java.util.Objects.requireNonNull;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.nio.charset.spi.CharsetProvider;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A byte order mark (BOM) that hard-codes charset into an input stream. At this time, this
@@ -36,60 +42,127 @@ public enum ByteOrderMark {
   /**
    * The BOM for a UTF-8 stream
    */
-  UTF_8(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, StandardCharsets.UTF_8),
+  UTF_8(new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, StandardCharsets.UTF_8, "UTF-8"),
 
   /**
    * The BOM for a UTF-16 big endian stream
    */
-  UTF_16BE(new byte[] {(byte) 0xFE, (byte) 0xFF}, StandardCharsets.UTF_16BE),
+  UTF_16BE(new byte[] {(byte) 0xFE, (byte) 0xFF}, StandardCharsets.UTF_16BE, "UTF-16BE"),
 
   /**
    * The BOM for a UTF-16 little endian stream
    */
-  UTF_16LE(new byte[] {(byte) 0xFF, (byte) 0xFE}, StandardCharsets.UTF_16LE);
+  UTF_16LE(new byte[] {(byte) 0xFF, (byte) 0xFE}, StandardCharsets.UTF_16LE, "UTF-16LE"),
+
+  /**
+   * The BOM for a UTF-32 big endian stream
+   */
+  UTF_32BE(new byte[] {(byte) 0x00, (byte) 0x00, (byte) 0xFE, (byte) 0xFF}, null, "UTF-32BE"),
+
+  /**
+   * The BOM for a UTF-32 little endian stream
+   */
+  UTF_32LE(new byte[] {(byte) 0xFF, (byte) 0xFE, (byte) 0x00, (byte) 0x00}, null, "UTF-32LE"),
+
+  /**
+   * The BOM for a UTF-7 stream
+   */
+  UTF_7(new byte[] {(byte) 0x2B, (byte) 0x2F, (byte) 0x76, (byte) 0x38}, null, "UTF-7"),
+
+  /**
+   * The BOM for a UTF-1 stream
+   */
+  UTF_1(new byte[] {(byte) 0xF7, (byte) 0x64, (byte) 0x4C}, null, "UTF-1"),
+
+  /**
+   * The BOM for a UTF-EBCDIC
+   */
+  UTF_EBCDIC(new byte[] {(byte) 0xDD, (byte) 0x73, (byte) 0x66, (byte) 0x73}, null, "UTF-EBCDIC"),
+
+  /**
+   * The BOM for a SCSU stream
+   */
+  SCSU(new byte[] {(byte) 0x0E, (byte) 0xFE, (byte) 0xFF}, null, "SCSU"),
+
+  /**
+   * The BOM for a BOCU-1 stream
+   */
+  BOCU_1(new byte[] {(byte) 0xFB, (byte) 0xEE, (byte) 0x28}, null, "BOCU-1"),
+
+  /**
+   * The BOM for a GB-18030 stream
+   */
+  GB_18030(new byte[] {(byte) 0x84, (byte) 0x31, (byte) 0x95, (byte) 0x33}, null, "GB-18030");
 
   public static final int MAX_BYTE_LENGTH =
       Arrays.stream(values()).mapToInt(bom -> bom.getBytes().length).max().getAsInt();
 
   /**
-   * Returns
+   * The values of the enum, sorted by the length of the BOM bytes, with the longest BOMs first.
    */
-  public static Optional<ByteOrderMark> detect(byte[] data) {
-    for (ByteOrderMark value : values()) {
-      byte[] bom = value.getBytes();
-      int bomlength = value.getBytes().length;
-      if (bomlength <= data.length && equals(data, 0, bomlength, bom, 0, bomlength)) {
-        return Optional.of(value);
-      }
-    }
-    return Optional.empty();
-  }
-
-  public static Optional<ByteOrderMark> detect(byte[] data, int datalen) {
-    for (ByteOrderMark value : values()) {
-      byte[] bom = value.getBytes();
-      int bomlen = value.getBytes().length;
-      if (bomlen <= datalen && equals(data, 0, bomlen, bom, 0, bomlen)) {
-        return Optional.of(value);
-      }
-    }
-    return Optional.empty();
+  private static final ByteOrderMark[] VALUES = Arrays.copyOf(values(), values().length);
+  static {
+    Arrays.sort(VALUES, Comparator.<ByteOrderMark>comparingInt(bom -> bom.getBytes().length)
+        .reversed().thenComparing(ByteOrderMark::getCharsetName));
   }
 
   /**
-   * Checks that {@code fromIndex} and {@code toIndex} are in the range and throws an exception if
-   * they aren't.
+   * Returns the BOM for the given data, if it is supported. Searches the whole array.
+   * 
+   * @param data the data to check
+   * @return the BOM, if found, otherwise empty
+   * 
+   * @see #detect(byte[], int)
    */
-  private static void rangeCheck(int arrayLength, int fromIndex, int toIndex) {
-    if (fromIndex > toIndex) {
-      throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+  public static Optional<ByteOrderMark> detect(byte[] data) {
+    return detect(data, data.length);
+  }
+
+  /**
+   * Detects the BOM in the given data, starting at 0, up to the given length.
+   * 
+   * @param data the data to check
+   * @param len the length of the data to check
+   * @return the BOM, if found, otherwise empty
+   * 
+   * @see #detect(byte[], int, int)
+   */
+  public static Optional<ByteOrderMark> detect(byte[] data, int len) {
+    return detect(data, 0, len);
+  }
+
+  /**
+   * Detects the BOM in the given data, starting at the given offset and continuing for the given
+   * length.
+   * 
+   * @param data the data to check
+   * @param off the offset in the data to start checking
+   * @param len the length of the data to check
+   * @return the BOM, if found, otherwise empty
+   *
+   * @throws NullPointerException if {@code data} is {@code null}
+   * @throws IllegalArgumentException if {@code len < 0}
+   * @throws ArrayIndexOutOfBoundsException if {@code off < 0} or {@code off + len > data.length}
+   */
+  public static Optional<ByteOrderMark> detect(byte[] data, int off, int len) {
+    if (data == null)
+      throw new NullPointerException();
+    if (len < 0)
+      throw new IllegalArgumentException("len < 0");
+    if (off < 0)
+      throw new ArrayIndexOutOfBoundsException(off);
+    if (off + len > data.length)
+      throw new ArrayIndexOutOfBoundsException(off + len);
+
+    for (ByteOrderMark value : VALUES) {
+      byte[] bom = value.getBytes();
+      int bomlen = value.getBytes().length;
+      if (off + bomlen <= len && equals(data, off, off + bomlen, bom, 0, bomlen)) {
+        return Optional.of(value);
+      }
     }
-    if (fromIndex < 0) {
-      throw new ArrayIndexOutOfBoundsException(fromIndex);
-    }
-    if (toIndex > arrayLength) {
-      throw new ArrayIndexOutOfBoundsException(toIndex);
-    }
+
+    return Optional.empty();
   }
 
   /**
@@ -135,12 +208,33 @@ public enum ByteOrderMark {
     return true;
   }
 
-  private final byte[] bytes;
-  private final Charset charset;
+  /**
+   * Checks that {@code fromIndex} and {@code toIndex} are in the range and throws an exception if
+   * they aren't.
+   */
+  private static void rangeCheck(int arrayLength, int fromIndex, int toIndex) {
+    if (fromIndex > toIndex) {
+      throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+    }
+    if (fromIndex < 0) {
+      throw new ArrayIndexOutOfBoundsException(fromIndex);
+    }
+    if (toIndex > arrayLength) {
+      throw new ArrayIndexOutOfBoundsException(toIndex);
+    }
+  }
 
-  private ByteOrderMark(byte[] bytes, Charset charset) {
-    this.bytes = bytes;
-    this.charset = charset;
+  private final byte[] bytes;
+  private final Charset standardCharset;
+  private final String charsetName;
+  private volatile AtomicReference<Charset> charset;
+
+  private ByteOrderMark(byte[] bytes, Charset standardCharset, String charsetName) {
+    this.bytes = requireNonNull(bytes);
+    this.standardCharset = standardCharset;
+    this.charsetName = requireNonNull(charsetName);
+    if (standardCharset != null)
+      this.charset = new AtomicReference<>(standardCharset);
   }
 
   /**
@@ -151,9 +245,55 @@ public enum ByteOrderMark {
   }
 
   /**
+   * Returns the charset for this BOM. Checks for standard charsets first, then attempts to load the
+   * charset using {@link Charset#forName(String)}. If the charset is not supported, then throws an
+   * {@link UnsupportedCharsetException}.
+   * 
    * @return the charset
+   * @throws UnsupportedCharsetException if the charset is not supported, e.g., UTF-32BE
+   * 
+   * @see #getCharsetIfSupported()
+   * @see CharsetProvider
    */
   public Charset getCharset() {
-    return charset;
+    return getCharsetIfSupported().orElseThrow(() -> new UnsupportedCharsetException(charsetName));
+  }
+
+  /**
+   * Returns the charset for this BOM. Checks for standard charsets first, then attempts to load the
+   * charset using {@link Charset#forName}. If the charset is not supported, then returns empty.
+   * 
+   * @return the charset, if supported, otherwise empty
+   * @see #getCharset()
+   */
+  public Optional<Charset> getCharsetIfSupported() {
+    // If it's a standard charset, return it
+    if (standardCharset != null)
+      return Optional.of(standardCharset);
+
+    // If it's not a standard charset, then attempt to load it and cache the result.
+    if (charset == null) {
+      Charset c;
+      try {
+        c = Charset.forName(charsetName);
+      } catch (IllegalCharsetNameException e) {
+        // If the charset name is illegal, then set the cached charset to null.
+        c = null;
+      } catch (UnsupportedCharsetException e) {
+        // If the charset is not supported, then set the cached charset to null.
+        c = null;
+      }
+      charset = new AtomicReference<>(c);
+    }
+
+    // If the cached charset is null, then return empty. Otherwise, return.
+    return Optional.ofNullable(charset.get());
+  }
+
+  /**
+   * @return the charset name
+   */
+  public String getCharsetName() {
+    return charsetName;
   }
 }
