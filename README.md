@@ -21,12 +21,21 @@ character set detection and decoding, namely byte order mark handling.
 
 To decode an `InputStream` to a `Reader` by detecting its character set:
 
-    try (Reader chars=Chardet.decode(bytes, StandardCharsets.UTF_8)) {
+    // Easy-to-use DecodedInputStreamReader implementation is AutoCloseable and makes
+    // the detected charset available.
+    try (DecodedInputStreamReader chars=
+            Chardet.decode(bytes, StandardCharsets.UTF_8)) {
+        // One of the following has happened:
+        // - The charset was detected and is supported by current JVM
+        // - The charset could not be detected and given default (UTF-8) being used
+        
+        // This is the charset being used to decode characters
+        Charset detectedCharset = chars.charset();
+        
         // Process chars here
+    } catch(UnsupportedCharsetException e) {
+        // The charset was detected, but is not supported by current JVM.
     }
-
-Note that the `UTF-8` encoding is used by default if the character set
-cannot be detected automatically.
 
 Charset detection is important when dealing with content of unknown
 provenance, like content downloaded from the internet. In such cases,
@@ -36,15 +45,54 @@ charset detection:
 
     try (Reader chars=Chardet.decode(bytes, declaredEncoding, StandardCharsets.UTF_8)) {
         // Process chars here
+    } catch(UnsupportedCharsetException e) {
+        // Process unsupported charset here
     }
 
 Byte arrays can be converted directly to Strings as well:
 
-    String chars=Chardet.toString(bytes, declaredEncoding, StandardCharsets.UTF_8);
+    String chars;
+    try {
+        chars = Chardet.decode(bytes, declaredEncoding, StandardCharsets.UTF_8);
+    } catch(UnsupportedCharsetException e) {
+        // Could not decode chars because detected charset not supported by current JVM
+    }
 
 Users can simply detect a character set, too:
 
-    Optional<Charset> maybeCharset=Chardet.detectCharset(bytes, declaredEncoding);
+    // We can detect the charset by name. Never throws an exception.
+    Optional<String> maybeCharsetName = Chardet.detectCharsetName(bytes, declaredEncoding);
+    if(maybeCharsetName.isPresent()) {
+        // The charset was detected successfully.
+        String detectedCharsetName = maybeCharsetName.orElseThrow();
+        
+        // We can look up the charset by name at any point.
+        Charset detectedCharset;
+        try {
+            detectedCharset = Charset.forName(detectedCharsetName);
+            // The charset is supported by the current JVM.
+        } catch(UnsupportedCharsetException e) {
+            // The charset is not supported by the current JVM.
+        }
+    } else {
+        // The charset could not be detected. maybeCharsetName is empty.
+    }
+    
+    // We can detect the charset directly. Throws an UnsupportedCharsetException if
+    // the detected charset is not supported by the current JVM.
+    Optional<Charset> maybeCharset;
+    try {
+        maybeCharset = Chardet.detectCharset(bytes, declaredEncoding);
+        if(maybeCharset.isPresent()) {
+            // The charset was detected and is supported by current JVM.
+            Charset detectedCharset = maybeCharset.orElseThrow();
+        } else {
+            // The charset could not be detected. maybeCharset is empty.
+        }
+    } catch(UnsupportedCharsetException e) {
+        // The charset was detected, but is not supported by current JVM.
+    }
+    
     
 ## Supported Character Encodings
 
@@ -94,12 +142,16 @@ Notes:
 
 The support levels have the following meanings:
 
-* `Standard` -- The Java Standard requires that all JVMs support this character encoding
-* `ICU4J` -- The ICU4J project has a bespoke charset recognizer for this character encoding
+* `Standard` -- The Java Standard requires that all JVMs support this
+   character encoding
+* `ICU4J` -- The ICU4J project has a bespoke charset recognizer for this
+  character encoding
 * `BOM` -- The character encoding can be detected by Byte Order Mark
-* `Laptop` -- The character sets supported by `java version "1.8.0_321"` on my laptop (Obviously, this test is completely unscientific. If you have a better suggestion, please open an issue!)
+* `Laptop` -- The character sets supported by `java version "1.8.0_321"` on my
+   laptop (Obviously, this test is completely unscientific. If you have a
+   better suggestion, please open an issue!)
 
 ## Licensing
 
-The icu library is released under the ICU license. The chardet4j
-library is released under the Apache license.
+The icu library is released under the ICU license. The chardet4j library is
+released under the Apache license.
