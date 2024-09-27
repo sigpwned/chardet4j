@@ -73,6 +73,15 @@ detection:
 Byte arrays can be converted directly to Strings as well:
 
     String chars=Chardet.decode(bytes, declaredEncoding, StandardCharsets.UTF_8);
+    
+Users only interested in detection can detect the charset directly, or by name
+in case the detected charset is not supported by the JVM:
+
+    // Throws an UnsupportedCharsetException if the charset is not supported by JVM
+    Optional<Charset> maybeCharset = Chardet.detect(bytes, declaredEncoding);
+    
+    // Never throws
+    Optional<String> maybeCharsetName = Chardet.detectName(bytes, declaredEncoding);
 
 ## Advanced Usage
 
