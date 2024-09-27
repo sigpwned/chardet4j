@@ -47,6 +47,11 @@ The library can be found in Maven Central with the following coordinates:
 
 It is compatible with Java versions 8 and later.
 
+The `$major.$minor.$patch` version of the library is determined by the underlying
+icu4j version and the local release version. The `$major` and `$minor` are taken
+from the icu4j version, and `$patch` is the release number of this library for
+the icu4j version, starting with 0.
+
 ## Getting Started
 
 To decode an `InputStream` to a `Reader` by detecting its character set:
