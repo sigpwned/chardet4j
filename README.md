@@ -102,7 +102,6 @@ encodings at the following levels:
 |     Name     | Standard | ICU4J | BOM | Laptop |
 |:------------:|:--------:|:-----:|:---:|:------:|
 | Big5         |          |   ✔   |     |    ✔   |
-| BOCU-1       |          |       |  ✔  |        |
 | EUC-JP       |          |   ✔   |     |    ✔   |
 | EUC-KR       |          |   ✔   |     |    ✔   |
 | GB18030      |          |   ✔   |  ✔  |    ✔   |
@@ -118,7 +117,6 @@ encodings at the following levels:
 | ISO-8859-8-I |          |   ✔   |     |        |
 | ISO-8859-9   |          |   ✔   |     |    ✔   |
 | KOI8-R       |          |   ✔   |     |    ✔   |
-| SCSU         |          |       |  ✔  |        |
 | Shift_JIS    |          |   ✔   |     |    ✔   |
 | US-ASCII     |     ✔    |   ✔*  |     |    ✔   |
 | UTF-1        |          |       |  ✔  |        |
@@ -126,7 +124,6 @@ encodings at the following levels:
 | UTF-16LE     |     ✔    |   ✔   |  ✔  |    ✔   |
 | UTF-32BE     |          |   ✔   |  ✔  |    ✔   |
 | UTF-32LE     |          |   ✔   |  ✔  |    ✔   |
-| UTF-7        |          |       |  ✔  |        |
 | UTF-8        |     ✔    |   ✔   |  ✔  |    ✔   |
 | UTF-EBCDIC   |          |       |  ✔  |        |
 | windows-1250 |          |   ✔   |     |    ✔   |

@@ -65,11 +65,6 @@ public enum ByteOrderMark {
   UTF_32LE(new byte[] {(byte) 0xFF, (byte) 0xFE, (byte) 0x00, (byte) 0x00}, null, "UTF-32LE"),
 
   /**
-   * The BOM for a UTF-7 stream
-   */
-  UTF_7(new byte[] {(byte) 0x2B, (byte) 0x2F, (byte) 0x76, (byte) 0x38}, null, "UTF-7"),
-
-  /**
    * The BOM for a UTF-1 stream
    */
   UTF_1(new byte[] {(byte) 0xF7, (byte) 0x64, (byte) 0x4C}, null, "UTF-1"),
@@ -80,19 +75,13 @@ public enum ByteOrderMark {
   UTF_EBCDIC(new byte[] {(byte) 0xDD, (byte) 0x73, (byte) 0x66, (byte) 0x73}, null, "UTF-EBCDIC"),
 
   /**
-   * The BOM for a SCSU stream
-   */
-  SCSU(new byte[] {(byte) 0x0E, (byte) 0xFE, (byte) 0xFF}, null, "SCSU"),
-
-  /**
-   * The BOM for a BOCU-1 stream
-   */
-  BOCU_1(new byte[] {(byte) 0xFB, (byte) 0xEE, (byte) 0x28}, null, "BOCU-1"),
-
-  /**
    * The BOM for a GB-18030 stream
    */
   GB_18030(new byte[] {(byte) 0x84, (byte) 0x31, (byte) 0x95, (byte) 0x33}, null, "GB-18030");
+  
+  // While BOMs for UTF-7, SCSU, and BOCU-1 exist, they are not deterministic and may not observe
+  // byte boundaries. Also, the JVM generally does not support these charsets out of the box. So,
+  // to keep things simple, these BOMs are not supported here.
 
   public static final int MAX_BYTE_LENGTH =
       Arrays.stream(values()).mapToInt(bom -> bom.getBytes().length).max().getAsInt();
