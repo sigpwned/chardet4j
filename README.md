@@ -45,7 +45,7 @@ The library can be found in Maven Central with the following coordinates:
         <version>75.1.1</version>
     </dependency>
 
-It is compatible with Java versions 8 and later.
+It is compatible with Java versions 8 and later. chardet4j has no dependencies.
 
 The `$major.$minor.$patch` version of the library is determined by the underlying
 icu4j version and the local release version. The `$major` and `$minor` are taken
