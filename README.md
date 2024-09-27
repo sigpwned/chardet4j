@@ -1,4 +1,4 @@
-# CHARDET4J [![tests](https://github.com/sigpwned/chardet4j/actions/workflows/tests.yml/badge.svg)](https://github.com/sigpwned/chardet4j/actions/workflows/tests.yml) ![Maven Central](https://img.shields.io/maven-central/v/com.sigpwned/chardet4j)
+# CHARDET4J [![tests](https://github.com/sigpwned/chardet4j/actions/workflows/tests.yml/badge.svg)](https://github.com/sigpwned/chardet4j/actions/workflows/tests.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.sigpwned/chardet4j)](https://central.sonatype.com/search?q=g%3Acom.sigpwned%20a%3Achardet4j) [![javadoc](https://javadoc.io/badge2/com.sigpwned/chardet4j/javadoc.svg)](https://javadoc.io/doc/com.sigpwned/chardet4j)
 
 ## Introduction
 
