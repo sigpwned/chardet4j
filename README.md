@@ -88,10 +88,8 @@ encodings at the following levels:
 | windows-1254 |          |   ✔   |     |    ✔   |
 | windows-1255 |          |   ✔   |     |    ✔   |
 | windows-1256 |          |   ✔   |     |    ✔   |
-|:------------:|:--------:|:-----:|:---:|:------:|
-|     Name     | Standard | ICU4J | BOM | Laptop |
 
-Notes:
+Notes:  
 `*`: ICU4J detects US-ASCII as ISO-8859-1, a superset of US-ASCII
 
 The support levels have the following meanings:
