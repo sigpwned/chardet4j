@@ -20,6 +20,8 @@
 package com.sigpwned.chardet4j;
 
 import static java.util.Objects.requireNonNull;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +31,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import com.sigpwned.chardet4j.io.BomAwareInputStream;
 
 /**
  * A byte order mark (BOM) that hard-codes charset into an input stream. At this time, this
@@ -78,7 +81,7 @@ public enum ByteOrderMark {
    * The BOM for a GB-18030 stream
    */
   GB_18030(new byte[] {(byte) 0x84, (byte) 0x31, (byte) 0x95, (byte) 0x33}, null, "GB-18030");
-  
+
   // While BOMs for UTF-7, SCSU, and BOCU-1 exist, they are not deterministic and may not observe
   // byte boundaries. Also, the JVM generally does not support these charsets out of the box. So,
   // to keep things simple, these BOMs are not supported here.
@@ -96,6 +99,18 @@ public enum ByteOrderMark {
   }
 
   /**
+   * Detects the BOM in the given input stream, if any, and returns a {@link BomAwareInputStream}
+   * that wraps the stream.
+   * 
+   * @param in the input stream
+   * @return the {@link BomAwareInputStream}
+   * @throws IOException if an I/O error
+   */
+  public static BomAwareInputStream detect(InputStream in) throws IOException {
+    return BomAwareInputStream.detect(in);
+  }
+
+  /**
    * Returns the BOM for the given data, if it is supported. Searches the whole array.
    * 
    * @param data the data to check
@@ -106,7 +121,7 @@ public enum ByteOrderMark {
    * @see #detect(byte[], int)
    */
   public static Optional<ByteOrderMark> detect(byte[] data) {
-    if(data == null)
+    if (data == null)
       throw new NullPointerException();
     return detect(data, data.length);
   }
@@ -237,8 +252,12 @@ public enum ByteOrderMark {
   /**
    * @return the bytes
    */
-  public byte[] getBytes() {
+  /* default */ byte[] getBytes() {
     return bytes;
+  }
+
+  public int length() {
+    return bytes.length;
   }
 
   /**

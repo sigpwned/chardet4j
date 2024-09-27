@@ -28,7 +28,7 @@ import java.nio.charset.Charset;
  * A simple wrapper around an InputStreamReader that remembers the charset that was used to decode
  * the input stream.
  */
-public class DecodedInputStreamReader extends InputStreamReader {
+public final class DecodedInputStreamReader extends InputStreamReader {
   private final Charset charset;
 
   public DecodedInputStreamReader(InputStream in, Charset charset) {

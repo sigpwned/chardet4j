@@ -36,7 +36,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import com.sigpwned.chardet4j.com.ibm.icu.text.CharsetDetector;
+import com.sigpwned.chardet4j.io.BomAwareInputStream;
 import com.sigpwned.chardet4j.io.DecodedInputStreamReader;
+import com.sigpwned.chardet4j.util.ByteStreams;
+import com.sigpwned.chardet4j.util.CharStreams;
 
 /**
  * Simple interface to charset detection.
@@ -109,7 +112,7 @@ public final class Chardet {
 
     @Override
     public int compareTo(ChardetMatch o) {
-      return getConfidence() - o.getConfidence();
+      return Integer.compare(getConfidence(), o.getConfidence());
     }
   }
 
@@ -139,6 +142,8 @@ public final class Chardet {
    * @throws UnsupportedOperationException If the charset can be detected, but is not supported.
    */
   public static Optional<Charset> detectCharset(byte[] data, String declaredEncoding) {
+    if (data == null)
+      throw new NullPointerException();
     return detectCharset(data, data.length, declaredEncoding);
   }
 
@@ -205,6 +210,8 @@ public final class Chardet {
    * @throws NullPointerException if data is null
    */
   public static Optional<String> detectCharsetName(byte[] data, String declaredEncoding) {
+    if (data == null)
+      throw new NullPointerException();
     return detectCharsetName(data, data.length, declaredEncoding);
   }
 
@@ -236,6 +243,8 @@ public final class Chardet {
    * @throws NullPointerException if data is null
    * @throws IllegalArgumentException if len < 0
    * @throws ArrayIndexOutOfBoundsException if off < 0 or off + len > data.length
+   * @throws UncheckedIOException if an I/O error occurs, which should not happen because all I/O
+   *         operations are performed in-memory
    */
   public static Optional<String> detectCharsetName(byte[] data, int off, int len,
       String declaredEncoding) {
@@ -339,29 +348,19 @@ public final class Chardet {
     if (defaultCharset == null)
       throw new NullPointerException();
 
-    int buflen = 0;
-    byte[] buf = new byte[DECODE_DETECT_BUFSIZE];
-    for (int nread = input.read(buf, buflen, buf.length - buflen); nread != -1; nread =
-        input.read(buf, buflen, buf.length - buflen)) {
-      buflen = buflen + nread;
-      if (buflen == buf.length)
-        break;
-    }
+    // Detect the BOM, if any. If there is one, then trust it and use the corresponding charset.
+    final BomAwareInputStream bomed = BomAwareInputStream.detect(input);
+    if (bomed.bom().isPresent())
+      return new DecodedInputStreamReader(bomed, bomed.bom().get().getCharset());
 
-    // Note that this cannot be null, since we check defaultCharset above.
-    Charset charset = detectCharset(buf, buflen, declaredEncoding).orElse(defaultCharset);
+    // If there is no BOM, then read some bytes to detect the charset.
+    final byte[] buf = ByteStreams.readNBytes(input, DECODE_DETECT_BUFSIZE);
 
-    int offset;
-    Optional<ByteOrderMark> maybeBom = ByteOrderMark.detect(buf, buflen);
-    if (maybeBom.isPresent()) {
-      offset = maybeBom.map(bom -> bom.getBytes().length).get();
-    } else {
-      offset = 0;
-    }
+    // Note that charset cannot be null, since we check defaultCharset above.
+    Charset charset = detectCharset(buf, declaredEncoding).orElse(defaultCharset);
 
     return new DecodedInputStreamReader(
-        new SequenceInputStream(new ByteArrayInputStream(buf, offset, buflen - offset), input),
-        charset);
+        new SequenceInputStream(new ByteArrayInputStream(buf), input), charset);
   }
 
   /**
@@ -467,10 +466,7 @@ public final class Chardet {
     try (InputStream in = new ByteArrayInputStream(data, off, len);
         Reader r = decode(in, declaredEncoding, defaultCharset);
         Writer w = new StringWriter()) {
-      char[] chbuf = new char[8192];
-      for (int nread = r.read(chbuf); nread != -1; nread = r.read(chbuf)) {
-        w.write(chbuf, 0, nread);
-      }
+      CharStreams.transferTo(r, w);
       return w.toString();
     } catch (IOException e) {
       throw new UncheckedIOException(e);
