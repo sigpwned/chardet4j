@@ -354,13 +354,13 @@ public final class Chardet {
       return new DecodedInputStreamReader(bomed, bomed.bom().get().getCharset());
 
     // If there is no BOM, then read some bytes to detect the charset.
-    final byte[] buf = ByteStreams.readNBytes(input, DECODE_DETECT_BUFSIZE);
+    final byte[] buf = ByteStreams.readNBytes(bomed, DECODE_DETECT_BUFSIZE);
 
     // Note that charset cannot be null, since we check defaultCharset above.
     Charset charset = detectCharset(buf, declaredEncoding).orElse(defaultCharset);
 
     return new DecodedInputStreamReader(
-        new SequenceInputStream(new ByteArrayInputStream(buf), input), charset);
+        new SequenceInputStream(new ByteArrayInputStream(buf), bomed), charset);
   }
 
   /**
