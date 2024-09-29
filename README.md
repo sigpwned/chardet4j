@@ -42,7 +42,7 @@ The library can be found in Maven Central with the following coordinates:
     <dependency>
         <groupId>com.sigpwned</groupId>
         <artifactId>chardet4j</artifactId>
-        <version>75.1.1</version>
+        <version>75.1.2</version>
     </dependency>
 
 It is compatible with Java versions 8 and later. chardet4j has no dependencies.
