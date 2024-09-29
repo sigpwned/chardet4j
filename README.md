@@ -12,7 +12,7 @@ The chardet4j library pulls the `CharsetDetector` feature from icu4j
 and repackages it as this standalone library. This allows programs to
 make good use of this important feature without bloating their
 JARs. At the time of this writing, the chardet4j JAR comes in around
-75KB.
+85KB. There are no dependencies.
 
 This library also implements some other important components of
 character set detection and decoding, namely byte order mark handling.
