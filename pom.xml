@@ -94,9 +94,14 @@
         </dependency>
     </dependencies>
 
+    <!--
+     Release process:
+     - mvn clean compile install                 # make sure it works
+     - mvn versions:set -DnewVersion=78.1.0      # set new version
+     - mvn -s /path/to/settings.xml clean deploy # deploy with appropriate settings 
+    -->
     <build>
         <plugins>
-
             <!-- Attach sources -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -160,5 +165,4 @@
 
         </plugins>
     </build>
-
 </project>
